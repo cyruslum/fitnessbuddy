@@ -1,4 +1,4 @@
-## Stripe setup Stripe setup
+## Stripe setup 
 
 1. Run `composer install`.
 2. Copy `stripe_config.example.php` to `stripe_config.php`.
