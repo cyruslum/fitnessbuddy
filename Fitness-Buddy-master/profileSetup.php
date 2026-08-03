@@ -1,6 +1,9 @@
 ﻿<?php
-require 'db.php';
+
 session_start();
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/csrf.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -22,10 +25,11 @@ $profileStmt->execute();
 $profile = $profileStmt->fetch(PDO::FETCH_ASSOC);
 
 // Jag~ Check if payment information exists for the user
-$paymentStmt = $conn->prepare("SELECT * FROM payment_information WHERE user_id = :user_id");
-$paymentStmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
-$paymentStmt->execute();
-$paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
+// Rehman - Legacy payment code, Stripe API is used now
+// $paymentStmt = $conn->prepare("SELECT * FROM payment_information WHERE user_id = :user_id");
+// $paymentStmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+// $paymentStmt->execute();
+// $paymentInfo = $paymentStmt->fetch(PDO::FETCH_ASSOC);
 
 // create a profile record if it doesn't exist
 if (!$profile) {
@@ -35,6 +39,7 @@ if (!$profile) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	require_csrf_token();
     $updateFields = [];
     $params = [':user_id' => $userId];
 
@@ -72,10 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateFields[] = "bio = :bio";
         $params[':bio'] = $_POST['bio'];
     }
-    if (!empty($_POST['membership_tier'])) {
-        $updateFields[] = "membership_tier = :membership_tier";
-        $params[':membership_tier'] = $_POST['membership_tier'];
-    }
+   // legacy membership selection
+   // if (!empty($_POST['membership_tier'])) {
+   //     $updateFields[] = "membership_tier = :membership_tier";
+   //     $params[':membership_tier'] = $_POST['membership_tier'];
+   // }
 
     // Handle file upload
     if (!empty($_FILES['profile_picture']['name'])) {
@@ -100,7 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateStmt->execute($params);
     }
 
-    // Jag~ Payment Processing if premium is selected
+    // outdated payment processing
+    // Jag~ Payment Processing if premium is selecteda
+	/*
     if (isset($_POST['membership_tier']) && $_POST['membership_tier'] === 'premium') {
         // Validate payment information
         if (empty($_POST['cardholderName']) || empty($_POST['cardNumber']) || 
@@ -174,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paymentStmt->bindParam(':postal_code', $_POST['postalCode']);
         $paymentStmt->execute();
     }
+	*/
     // Jag~ Done
 
     // If the profile is not yet completed, mark it as completed
@@ -230,6 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="form-container">
         <form action="" method="POST" enctype="multipart/form-data">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
             <div class="profile-section">
                 <h5>Complete Your Profile</h5>
                 <div class="profile-picture-placeholder" id="profile-pic-container" style="cursor: pointer;">
@@ -430,73 +440,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <!-- Jag~ Payment information if premium is selected-->
-            <div id="paymentSection" style="display: none;" class="profile-section">
-                <h5>Payment Information</h5>
-                <!-- Display error message if any -->
-                <?php if (isset($_SESSION['payment_error'])): ?>
-                    <div class="alert alert-danger">
-                        <?php echo $_SESSION['payment_error']; unset($_SESSION['payment_error']); ?>
-                    </div>
-                <?php endif; ?>
-    
-                <div class="mb-3">
-                    <label for="cardholderName" class="form-label">Cardholder Name*</label>
-                    <input type="text" class="form-control" name="cardholderName" id="cardholderName" value="<?php echo isset($paymentInfo['cardholder_name']) ? htmlspecialchars($paymentInfo['cardholder_name']) : ''; ?>">
-                </div>
-    
-                <div class="mb-3">
-                    <label for="cardNumber" class="form-label">Card Number (13-16)*</label>
-                    <input type="text" class="form-control" name="cardNumber" id="cardNumber" maxlength="16" placeholder="<?php echo isset($paymentInfo['card_number_last_four']) ? '************' . htmlspecialchars($paymentInfo['card_number_last_four']) : ''; ?>">
-                    <small class="text-muted">Your card information is securely stored</small>
-                </div>
-    
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="expirationDate" class="form-label">Expiration Date (MM/YYYY)*</label>
-                        <input type="text" class="form-control" name="expirationDate" id="expirationDate" placeholder="MM/YYYY" value="<?php echo isset($paymentInfo['expiration_date']) ? htmlspecialchars($paymentInfo['expiration_date']) : ''; ?>">
-                    </div>
-                    <div class="col">
-                        <label for="cvv" class="form-label">CVV/CVC (3-4)*</label>
-                        <input type="password" class="form-control" name="cvv" id="cvv" maxlength="4">
-                        <small class="text-muted">3 or 4 digits on the back of your card</small>
-                    </div>
-                </div>
-    
-                <div class="mb-3">
-                    <label for="billingAddress" class="form-label">Billing Address*</label>
-                    <input type="text" class="form-control" name="billingAddress" id="billingAddress" value="<?php echo isset($paymentInfo['billing_address']) ? htmlspecialchars($paymentInfo['billing_address']) : ''; ?>">
-                </div>
-    
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="country" class="form-label">Country*</label>
-                        <input type="text" class="form-control" name="country" id="country" value="<?php echo isset($paymentInfo['country']) ? htmlspecialchars($paymentInfo['country']) : ''; ?>">
-                    </div>
-                    <div class="col">
-                        <label for="province" class="form-label">Province/State*</label>
-                        <input type="text" class="form-control" name="province" id="province" value="<?php echo isset($paymentInfo['province']) ? htmlspecialchars($paymentInfo['province']) : ''; ?>">
-                    </div>
-                </div>
-    
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="city" class="form-label">City*</label>
-                        <input type="text" class="form-control" name="city" id="city" value="<?php echo isset($paymentInfo['city']) ? htmlspecialchars($paymentInfo['city']) : ''; ?>">
-                    </div>
-                    <div class="col">
-                        <label for="postalCode" class="form-label">Postal/ZIP Code*</label>
-                        <input type="text" class="form-control" name="postalCode" id="postalCode" value="<?php echo isset($paymentInfo['postal_code']) ? htmlspecialchars($paymentInfo['postal_code']) : ''; ?>">
-                    </div>
-                </div>
-    
-                <div class="alert alert-info">
-                    <small>
-                        <i class="bi bi-info-circle"></i> Your payment information is securely stored. We only save the last 4 digits of your card number.
-                    </small>
-                </div>
-            </div>
-            <!-- Jag~ Done -->
+			<div id="paymentSection" style="display:none;" class="profile-section">
+				<h5>Choose Premium Billing</h5>
 
+				<select id="billingPeriod" class="form-select mb-3">
+					<option value="monthly">$9.99 CAD per month</option>
+					<option value="annual">$99.99 CAD per year</option>
+				</select>
+
+				<button type="button" id="checkoutButton" class="btn btn-primary">
+					Continue to secure checkout
+				</button>
+
+				<div id="paymentMessage" class="mt-3"></div>
+			</div>
             <div class="action-buttons">
                 <a href="myProfile.php" class="btn btn-cancel">Cancel</a> <!-- Jag~ changed index.php link to myProfile.php-->
                 <button type="submit" class="btn btn-save">Save</button>
@@ -505,6 +462,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	
+	<script>
+document.getElementById('checkoutButton').addEventListener('click', async () => {
+    const button = document.getElementById('checkoutButton');
+    const message = document.getElementById('paymentMessage');
+    const billingPeriod = document.getElementById('billingPeriod').value;
+	const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    button.disabled = true;
+    message.textContent = 'Opening secure checkout...';
+
+    try {
+        const response = await fetch('create_checkout_session.php', {
+            method: 'POST',
+			credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+				'Accept': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({
+                billing_period: billingPeriod
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Checkout could not be started.');
+        }
+
+        window.location.href = data.checkout_url;
+    } catch (error) {
+        message.textContent = error.message;
+        button.disabled = false;
+    }
+});
+</script>
 
     <script>
         document.getElementById('profile-pic-container').addEventListener('click', function () {

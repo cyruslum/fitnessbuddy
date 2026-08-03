@@ -1,0 +1,13 @@
+# Stripe/local secrets
+stripe_config.php
+.env
+
+# Composer dependencies
+/vendor/
+
+# User uploads
+/uploads/
+
+# Local system files
+desktop.ini
+.DS_Store

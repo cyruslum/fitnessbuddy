@@ -1,5 +1,9 @@
 <?php
-require 'db.php';
+
+session_start();
+require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/db.php';
+
 ?>
 
 <!DOCTYPE html>
@@ -109,6 +113,7 @@ require 'db.php';
         </div>
 
         <form id="registerForm">
+		<input type="hidden" id="csrfToken" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>" >
             <div class="form-section">
                 <div style="max-width: 400px; margin: 0 auto;">
                     <div class="mb-3">
@@ -216,6 +221,7 @@ require 'db.php';
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json" // Jag~
+					'X-CSRF-Token': document.getElementById('csrfToken').value
                 },
                 body: JSON.stringify(data)
             })

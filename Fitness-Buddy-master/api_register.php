@@ -1,7 +1,26 @@
 <?php
-require_once 'db.php'; // Your database connection
 
-//header('Content-Type: application/json');
+declare(strict_types=1);
+
+session_start();
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/csrf.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Invalid request method.'
+    ]);
+
+    exit;
+}
+
+require_csrf_token(true);
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Get the raw POST data and decode it as JSON
@@ -16,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Extract values from the JSON data
     $email = trim($data['email']);
     $password = $data['password'];
-    $membershipTier = $data['membershipTier'];
+    $membershipTier = 'free';
 
     // We no longer have username in the form, so create one from email
     $username = explode('@', $email)[0]; // Use part before @ as username
