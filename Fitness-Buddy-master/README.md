@@ -52,7 +52,7 @@ Pages
   Clone the Repository
 
   Edit
-  git clone https://github.com/cyruslum/fitnessbuddy.git
+  git clone https://github.com/anhad-dhiman/Fitness-Buddy.git
 
 
   Database Setup

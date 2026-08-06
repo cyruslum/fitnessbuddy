@@ -218,11 +218,11 @@ require_once __DIR__ . '/db.php';
 
             fetch("api_register.php", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json" // Jag~
-					'X-CSRF-Token': document.getElementById('csrfToken').value
-                },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json", // Jag~
+	                    'X-CSRF-Token': document.getElementById('csrfToken').value
+                    },
                 body: JSON.stringify(data)
             })
                 .then(response => response.json())
