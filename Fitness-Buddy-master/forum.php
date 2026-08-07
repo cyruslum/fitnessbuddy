@@ -1,17 +1,24 @@
 <?php
-require 'db.php';  // Include the database connection
+session_start();
 
-$stmt = $conn->query("
-    SELECT posts.id, posts.content, posts.created_at, users.username 
-    FROM posts 
-    JOIN users ON posts.user_id = users.id 
-    ORDER BY posts.created_at DESC
-");
-$posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once __DIR__ . '/db.php';
 
 // Check if the user is logged in
-session_start();
 $user_id = $_SESSION['user_id'] ?? null;
+
+// Fetch all forum posts
+$stmt = $conn->query(
+    "SELECT
+        posts.id,
+        posts.content,
+        posts.created_at,
+        users.username
+     FROM posts
+     JOIN users ON posts.user_id = users.id
+     ORDER BY posts.created_at DESC"
+);
+
+$posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
