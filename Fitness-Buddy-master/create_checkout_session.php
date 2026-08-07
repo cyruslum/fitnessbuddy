@@ -23,7 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$config = require __DIR__ . '/stripe_config.php';
+try {
+    $config = require __DIR__ . '/stripe_config.php';
+} catch (\Throwable $e) {
+    error_log('Stripe config error: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'Stripe is not configured.']);
+    exit;
+}
 
 if (empty($config['secret_key'])) {
     http_response_code(500);

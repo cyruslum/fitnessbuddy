@@ -1,8 +1,19 @@
 <?php
+require_once __DIR__ . '/load_env.php';
+
+function env_required(string $key): string
+{
+    $value = getenv($key);
+    if ($value === false || $value === '') {
+        throw new RuntimeException("Missing required environment variable: {$key}. Check your .env file.");
+    }
+    return $value;
+}
+
 return [
-    'secret_key'        => 'INSERT_SECRET_KEY',
-    'webhook_secret'     => 'INSERT_WEBHOOK',
-    'monthly_price_id'   => 'price_1U0y8DC00vz9v8F75e8xw4Jf',
-    'annual_price_id'    => 'price_1U0y97C00vz9v8F7dmNfQWy9',
-    'app_url'            => 'http://localhost/fitness_buddy',
+    'secret_key'         => env_required('STRIPE_SECRET_KEY'),
+    'webhook_secret'      => env_required('STRIPE_WEBHOOK_SECRET'),
+    'monthly_price_id'    => env_required('STRIPE_MONTHLY_PRICE_ID'),
+    'annual_price_id'     => env_required('STRIPE_ANNUAL_PRICE_ID'),
+    'app_url'             => getenv('APP_URL') ?: 'http://localhost/fitness_buddy',
 ];
