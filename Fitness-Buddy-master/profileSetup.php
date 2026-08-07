@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Get user information
-$userId = $_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = :user_id");
 $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
 $stmt->execute();
@@ -244,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h5>Complete Your Profile</h5>
                 <div class="profile-picture-placeholder" id="profile-pic-container" style="cursor: pointer;">
                     <?php if (!empty($profile['profile_picture'])): ?>
-                        <img src="<?php echo $profile['profile_picture']; ?>" alt="Profile Picture">
+                        <img src="<?= htmlspecialchars($profile['profile_picture'], ENT_QUOTES, 'UTF-8') ?>" alt="Profile Picture">
                     <?php else: ?>
                         <i class="bi bi-camera"></i> Add Photo
                     <?php endif; ?>
