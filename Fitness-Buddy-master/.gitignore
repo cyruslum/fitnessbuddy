@@ -1,5 +1,4 @@
 # Stripe/local secrets
-stripe_config.php
 .env
 
 # Composer dependencies
