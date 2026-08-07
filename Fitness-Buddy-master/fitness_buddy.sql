@@ -65,7 +65,6 @@ CREATE TABLE payment_information (
     INDEX (user_id)
 );
 
--- Tracks Stripe subscription status per user (used by stripe_webhook.php)
 CREATE TABLE stripe_subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
