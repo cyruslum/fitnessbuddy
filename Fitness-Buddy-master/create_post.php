@@ -1,21 +1,43 @@
 <?php
+
 session_start();
-require 'db.php';
+require_once __DIR__ . '/db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $content = $_POST['content'];
-    $user_id = $_SESSION['user_id'] ?? null; // Get the logged-in user's ID
-
-    if ($user_id && !empty($content)) {
-        $stmt = $conn->prepare("INSERT INTO posts (user_id, content) VALUES (?, ?)");
-        $stmt->execute([$user_id, $content]);
-
-        // Redirect to the home page after creating a post
-        header("Location: forum.php");
-        exit();
-    } else {
-        // Handle invalid form submission or user not logged in
-        echo "Please log in to post.";
-    }
+// Only allow POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Invalid request method.');
 }
+
+// Make sure the user is logged in
+$user_id = $_SESSION['user_id'] ?? null;
+
+if (!$user_id) {
+    exit('Please log in to post.');
+}
+
+// Get and validate post content
+$content = trim($_POST['content'] ?? '');
+
+if ($content === '') {
+    exit('Post content cannot be empty.');
+}
+
+// Convert user ID to integer
+$user_id = (int) $user_id;
+
+// Insert post using a prepared statement
+$stmt = $conn->prepare(
+    "INSERT INTO posts (user_id, content)
+     VALUES (:user_id, :content)"
+);
+
+$stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+$stmt->bindValue(':content', $content, PDO::PARAM_STR);
+
+$stmt->execute();
+
+// Redirect back to forum
+header('Location: forum.php');
+exit;
 ?>
