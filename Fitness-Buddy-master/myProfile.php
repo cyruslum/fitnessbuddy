@@ -1,46 +1,62 @@
-﻿<!-- Jag -->
-<?php
-    session_start();
-    require 'db.php';
-    
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: login.php");
-        exit();
-    }
+﻿<?php
+session_start();
+require_once __DIR__ . '/db.php';
 
-    $userId = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT * FROM users JOIN user_profiles ON users.id = user_profiles.user_id WHERE users.id = :user_id");
-    $stmt->bindParam(':user_id', $userId);
-    $stmt->execute();
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
-    // Function to format fitness goals
-    function formatFitnessGoals($goals) {
-        $goalsArray = explode(',', $goals);
-        $formattedGoals = array_map('ucfirst', $goalsArray);
-        return implode(', ', $formattedGoals);
-    }
-    
-    // Function to format workout types
-    function formatWorkoutTypes($workoutTypes) {
-        $workoutTypesArray = explode(',', $workoutTypes);
-        $formattedWorkoutTypes = array_map('ucfirst', $workoutTypesArray);
-        return implode(', ', $formattedWorkoutTypes);
-    }
+$userId = (int) $_SESSION['user_id'];
 
-    // Function to format availability
-    function formatAvailability($availability) {
-        $availabilityArray = explode(',', $availability);
-        $formattedAvailability = array_map(function($item) {
-            return ucfirst(str_replace('_', ' ', $item));
-        }, $availabilityArray);
-        return implode(', ', $formattedAvailability);
-    }
+$stmt = $conn->prepare(
+    "SELECT *
+     FROM users
+     JOIN user_profiles
+        ON users.id = user_profiles.user_id
+     WHERE users.id = :user_id"
+);
 
-    // Function to format gym location
-    function capFirstLetter($string) {
-        return ucwords(strtolower($string));
-    }
+$stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+$stmt->execute();
+
+$profile = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Function to format fitness goals
+function formatFitnessGoals($goals)
+{
+    $goalsArray = explode(',', $goals);
+    $formattedGoals = array_map('ucfirst', $goalsArray);
+
+    return implode(', ', $formattedGoals);
+}
+
+// Function to format workout types
+function formatWorkoutTypes($workoutTypes)
+{
+    $workoutTypesArray = explode(',', $workoutTypes);
+    $formattedWorkoutTypes = array_map('ucfirst', $workoutTypesArray);
+
+    return implode(', ', $formattedWorkoutTypes);
+}
+
+// Function to format availability
+function formatAvailability($availability)
+{
+    $availabilityArray = explode(',', $availability);
+
+    $formattedAvailability = array_map(function ($item) {
+        return ucfirst(str_replace('_', ' ', $item));
+    }, $availabilityArray);
+
+    return implode(', ', $formattedAvailability);
+}
+
+// Function to format gym location
+function capFirstLetter($string)
+{
+    return ucwords(strtolower($string));
+}
 ?>
 
 <!DOCTYPE html>
