@@ -1,35 +1,37 @@
-<!-- Jag -->
 <?php
-    session_start();
-    require 'db.php';
+session_start();
+require_once __DIR__ . '/db.php';
 
-    // Check post ID
-    if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-        header("Location: index.php");
-        exit();
-    }
+// Check post ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: index.php');
+    exit();
+}
 
-    $postId = $_GET['id'];
-    $userId = $_SESSION['user_id'] ?? null;
+$postId = (int) $_GET['id'];
 
-    // Fetch the post with x author information
-    $stmt = $conn->prepare("
-        SELECT posts.*, users.username
-        FROM posts
-        JOIN users ON posts.user_id = users.id
-        WHERE posts.id = :post_id
-    ");
-    $stmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
-    $stmt->execute();
+$userId = isset($_SESSION['user_id'])
+    ? (int) $_SESSION['user_id']
+    : null;
 
-    // Does post exist?
-    if ($stmt->rowCount() == 0) {
-        header("Location: index.php");
-        exit();
-    }
+// Fetch post with author information
+$stmt = $conn->prepare(
+    "SELECT posts.*, users.username
+     FROM posts
+     JOIN users ON posts.user_id = users.id
+     WHERE posts.id = :post_id"
+);
 
-    $post = $stmt->fetch(PDO::FETCH_ASSOC);
-    ?>
+$stmt->bindValue(':post_id', $postId, PDO::PARAM_INT);
+$stmt->execute();
+
+$post = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$post) {
+    header('Location: index.php');
+    exit();
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
